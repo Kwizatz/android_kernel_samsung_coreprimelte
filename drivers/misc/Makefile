@@ -30,12 +30,15 @@ obj-$(CONFIG_SGI_GRU)		+= sgi-gru/
 obj-$(CONFIG_CS5535_MFGPT)	+= cs5535-mfgpt.o
 obj-$(CONFIG_HP_ILO)		+= hpilo.o
 obj-$(CONFIG_APDS9802ALS)	+= apds9802als.o
+obj-$(CONFIG_APDS9930)		+= apds993x.o
 obj-$(CONFIG_ISL29003)		+= isl29003.o
 obj-$(CONFIG_ISL29020)		+= isl29020.o
+obj-$(CONFIG_USB_HSIC_SMSC_HUB) += smsc_hub.o
 obj-$(CONFIG_SENSORS_TSL2550)	+= tsl2550.o
 obj-$(CONFIG_EP93XX_PWM)	+= ep93xx_pwm.o
 obj-$(CONFIG_DS1682)		+= ds1682.o
 obj-$(CONFIG_TI_DAC7512)	+= ti_dac7512.o
+obj-$(CONFIG_UID_STAT)		+= uid_stat.o
 obj-$(CONFIG_C2PORT)		+= c2port/
 obj-$(CONFIG_HMC6352)		+= hmc6352.o
 obj-y				+= eeprom/
@@ -48,8 +51,34 @@ obj-y				+= ti-st/
 obj-y				+= lis3lv02d/
 obj-y				+= carma/
 obj-$(CONFIG_USB_SWITCH_FSA9480) += fsa9480.o
+
+obj-$(CONFIG_SM5502_MUIC) += sm5502.o
+obj-$(CONFIG_SM5504_MUIC) += sm5504.o
+obj-$(CONFIG_SM5703_MUIC) += sm5703-muic.o
+
 obj-$(CONFIG_ALTERA_STAPL)	+=altera-stapl/
 obj-$(CONFIG_INTEL_MEI)		+= mei/
 obj-$(CONFIG_VMWARE_VMCI)	+= vmw_vmci/
 obj-$(CONFIG_LATTICE_ECP3_CONFIG)	+= lattice-ecp3-config.o
 obj-$(CONFIG_SRAM)		+= sram.o
+obj-$(CONFIG_TSIF) += msm_tsif.o
+obj-$(CONFIG_HAPTIC_ISA1200)		+= isa1200.o
+obj-$(CONFIG_QSEECOM) += qseecom.o
+ifdef CONFIG_COMPAT
+obj-$(CONFIG_QSEECOM) += compat_qseecom.o
+endif
+obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
+obj-$(CONFIG_QSEECOM)  += tzic.o
+obj-$(CONFIG_TI_DRV2667) += ti_drv2667.o
+obj-$(CONFIG_QPNP_MISC) += qpnp-misc.o
+obj-$(CONFIG_SAMSUNG_JACK)	+= sec_jack.o
+obj-$(CONFIG_SEC_NFC_I2C) += sec_nfc.o
+obj-$(CONFIG_QCOM_LIQUID_DOCK)	+= qcom_liquid_dock.o
+obj-$(CONFIG_SEC_MISC)	+= sec_param.o sec_misc.o
+obj-$(CONFIG_SEC_GPIO_SETTINGS) += gpio_settings.o
+obj-y				+= qcom/
+obj-$(CONFIG_DM_VERITY) += dmverity_query.o
+ifeq ($(TIMA_ENABLED),1)
+obj-$(CONFIG_TIMA_LOG)		+= tima_debug_log.o
+endif
+obj-$(CONFIG_CHECK_SIMSLOT_COUNT) += sim_slot.o

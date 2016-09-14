@@ -23,8 +23,17 @@
 #include <linux/init.h>
 #include <linux/nmi.h>
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/exception.h>
+#ifdef CONFIG_SEC_DEBUG
+#include <linux/sec_debug.h>
+#endif
+
 #define PANIC_TIMER_STEP 100
 #define PANIC_BLINK_SPD 18
+
+/* Machine specific panic information string */
+char *mach_panic_string;
 
 int panic_on_oops = CONFIG_PANIC_ON_OOPS_VALUE;
 static unsigned long tainted_mask;
@@ -32,7 +41,10 @@ static int pause_on_oops;
 static int pause_on_oops_flag;
 static DEFINE_SPINLOCK(pause_on_oops_lock);
 
-int panic_timeout;
+#ifndef CONFIG_PANIC_TIMEOUT
+#define CONFIG_PANIC_TIMEOUT 0
+#endif
+int panic_timeout = CONFIG_PANIC_TIMEOUT;
 EXPORT_SYMBOL_GPL(panic_timeout);
 
 ATOMIC_NOTIFIER_HEAD(panic_notifier_list);
@@ -73,6 +85,11 @@ void panic(const char *fmt, ...)
 	long i, i_next = 0;
 	int state = 0;
 
+	trace_kernel_panic(0);
+#ifdef CONFIG_SEC_DEBUG
+	emerg_pet_watchdog(); /*To prevent watchdog reset during panic handling. */
+#endif
+
 	/*
 	 * Disable local interrupts. This will prevent panic_smp_self_stop
 	 * from deadlocking the first cpu that invokes the panic, since
@@ -94,6 +111,9 @@ void panic(const char *fmt, ...)
 	if (!spin_trylock(&panic_lock))
 		panic_smp_self_stop();
 
+#ifdef CONFIG_SEC_DEBUG
+	secdbg_sched_msg("!!panic!!");
+#endif
 	console_verbose();
 	bust_spinlocks(1);
 	va_start(args, fmt);
@@ -107,7 +127,10 @@ void panic(const char *fmt, ...)
 	if (!test_taint(TAINT_DIE) && oops_in_progress <= 1)
 		dump_stack();
 #endif
-
+#ifdef CONFIG_SEC_DEBUG_SUBSYS
+	sec_debug_save_panic_info(buf,
+			(unsigned int)__builtin_return_address(0));
+#endif
 	/*
 	 * If we have crashed and we have a crash kernel loaded let it handle
 	 * everything else.
@@ -147,6 +170,9 @@ void panic(const char *fmt, ...)
 			mdelay(PANIC_TIMER_STEP);
 		}
 	}
+
+	trace_kernel_panic_late(0);
+
 	if (panic_timeout != 0) {
 		/*
 		 * This will not be a clean reboot, with everything
@@ -353,6 +379,7 @@ void oops_enter(void)
 	tracing_off();
 	/* can't trust the integrity of the kernel anymore: */
 	debug_locks_off();
+	oops_printk_start();
 	do_oops_enter_exit();
 }
 
@@ -375,6 +402,11 @@ late_initcall(init_oops_id);
 void print_oops_end_marker(void)
 {
 	init_oops_id();
+
+	if (mach_panic_string)
+		printk(KERN_WARNING "Board Information: %s\n",
+		       mach_panic_string);
+
 	printk(KERN_WARNING "---[ end trace %016llx ]---\n",
 		(unsigned long long)oops_id);
 }
